@@ -9,13 +9,13 @@ https://github.com/finos/legend/blob/master/installers/maven/README.md?plain=1#L
 <img src="legend_arch.svg" width="600" />
 
 ### Setup **legend-engine**.
+Using previous source build (saved via `publish --address ...`). You probably want this one if you can download the 2.23GB image 😄
+```
+dagger call legend-engine --source https://github.com/finos/legend-engine\#master --use-cached-container as-service up
+```
 Purely from source (2-3 hours)
 ```
 dagger call legend-engine --source https://github.com/finos/legend-engine\#master as-service up
-```
-Using previous source build (saved via `publish --address ...`)
-```
-dagger call legend-engine --source https://github.com/finos/legend-engine\#master --use-cached-container as-service up
 ```
 
 Test by going to http://localhost:6300 in a browser. The Swagger page can be accessed at http://localhost:6300/api/swagger.
