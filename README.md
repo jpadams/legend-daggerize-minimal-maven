@@ -6,6 +6,8 @@ https://github.com/finos/legend/blob/master/installers/maven/README.md?plain=1#L
 - [ ] `SDLC`
 - [ ] `Studio`
 
+<img src="legend_arch.svg" width="600" />
+
 ### Setup **legend-engine**.
 Purely from source (2-3 hours)
 ```
