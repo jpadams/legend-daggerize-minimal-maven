@@ -2,27 +2,21 @@ import {
     dag,
     Container,
     Directory,
-	File,
     object,
     func,
 } from "@dagger.io/dagger"
 
 @object()
 class legendDaggerizeMinimalMaven {
-  /**
-   * Returns a container for Legend Engine dev
-   */
-  @func()
-  legendEngine(source: Directory, config: File): Container {
-    const ubuntuImage = "ubuntu:jammy-20240530"
-    // const engineConfigDir = "/root/.legend/"
-    // const engineConfig = engineConfigDir + "config.yaml"
-    // const gitlabServer = "gitlab.com"
-    // const appId = "app-id-placeholder"
-    // const appSecret = "app-secret-placeholder"
-    // const sdlcServerHost = "localhost"
+    /**
+     * Returns Legend Engine Container ready to
+     * run as a Service on port 6300
+     */
+    @func()
+    legendEngine(source: Directory): Container {
+        const ubuntuImage = "ubuntu:jammy-20240530"
 
-    return dag
+        return dag
         .container()//{platform: "linux/amd64" as Platform})
         .from(ubuntuImage)
         .withExec([
@@ -50,13 +44,7 @@ class legendDaggerizeMinimalMaven {
         .withEnvVariable("MAVEN_OPTS", "-Xmx8192m")
         .withWorkdir("/src")
         .withExec(["mvn", "install", "-DskipTests"])
-        //.withFile(engineConfig, config) // /root/.legend/config.yaml
-        //.withEnvVariable("GITLAB_HOST", gitlabServer)
-        //.withEnvVariable("APP_ID", appId)
-        //.withEnvVariable("APP_SECRET", appSecret)
-        //.withEnvVariable("SDLC_SERVER_HOST" ,sdlcServerHost)
-        //.withExec(["bash", "-c", "envsubst < " + engineConfig + " > " + engineConfig + ".filled"])
-		.withExec([
+        .withExec([
             "bash",
             "-c",
             `java -cp \
