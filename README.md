@@ -22,6 +22,9 @@ Test by going to http://localhost:6300 in a browser. The Swagger page can be acc
 
 ### ISSUES:
 I was hitting the issue that everyone hits due to reorg of the project/class hierarchy without updating docs or something. I'm able to get past it now after looking for classes that implemented a `main` and choosing one that seemed likely.
+```
+grep -r "public static void main" | grep -i server | grep -vi invoker | grep -vi test | grep -v xts
+```
 
 Might build fine in JetBrains IntelliJ (haven't tried yet).
 Feb 2021: https://github.com/finos/legend/issues/309#issuecomment-781003612
