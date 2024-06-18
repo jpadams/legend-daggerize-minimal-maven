@@ -2,7 +2,7 @@ import {
     dag,
     Container,
     Directory,
-		File,
+	File,
     object,
     func,
 } from "@dagger.io/dagger"
@@ -15,7 +15,13 @@ class legendDaggerizeMinimalMaven {
   @func()
   legendEngine(source: Directory, config: File): Container {
     const ubuntuImage = "ubuntu:jammy-20240530"
-    const engineConfig = "/root/.legend/config.yaml"
+    // const engineConfigDir = "/root/.legend/"
+    // const engineConfig = engineConfigDir + "config.yaml"
+    // const gitlabServer = "gitlab.com"
+    // const appId = "app-id-placeholder"
+    // const appSecret = "app-secret-placeholder"
+    // const sdlcServerHost = "localhost"
+
     return dag
         .container()//{platform: "linux/amd64" as Platform})
         .from(ubuntuImage)
@@ -44,22 +50,22 @@ class legendDaggerizeMinimalMaven {
         .withEnvVariable("MAVEN_OPTS", "-Xmx8192m")
         .withWorkdir("/src")
         .withExec(["mvn", "install", "-DskipTests"])
-        .withFile(engineConfig, config)
-        .withEnvVariable("GITLAB_SERVER", "gitlab.com")
-        .withEnvVariable("APP_ID", "app-id-placeholder")
-        .withEnvVariable("APP_SECRET", "app-secret-placeholder")
-        .withEnvVariable("SDLC_SERVER_HOST" ,"localhost")
-        .withExec(["echo", "$GITLAB_SERVER", ">>", "/root/.bashrc"])
-        .withExec(["echo", "$APP_ID", ">>", "/root/.bashrc"])
-        .withExec(["echo", "$APP_SECRET", ">>", "/root/.bashrc"])
-        .withExec(["echo", "$SDLC_SERVER_HOST", ">>", "/root/.bashrc"])
-        .withExec(["bash", "-c", "envsubst <" + engineConfig + ">" + engineConfig + ".filled"])
-		// .withExec([
-        //     "bash",
-        //     "-c",
-        //     `java -cp \
-        //     legend-engine-server/target/*-shaded.jar org.finos.legend.engine.server.Server \
-        //     server` + " " + engineConfig + ".filled"
-        // ])
+        //.withFile(engineConfig, config) // /root/.legend/config.yaml
+        //.withEnvVariable("GITLAB_HOST", gitlabServer)
+        //.withEnvVariable("APP_ID", appId)
+        //.withEnvVariable("APP_SECRET", appSecret)
+        //.withEnvVariable("SDLC_SERVER_HOST" ,sdlcServerHost)
+        //.withExec(["bash", "-c", "envsubst < " + engineConfig + " > " + engineConfig + ".filled"])
+		.withExec([
+            "bash",
+            "-c",
+            `java -cp \
+            java -cp \
+            legend-engine-config/legend-engine-server/legend-engine-server-http-server/target/legend-engine-server-http-server-*-shaded.jar \
+            org.finos.legend.engine.server.Server \
+            server \
+            legend-engine-config/legend-engine-server/legend-engine-server-http-server/config/config.json`
+        ])
+        .withExposedPort(6300)
     }
 }
