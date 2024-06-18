@@ -13,15 +13,18 @@ class legendDaggerizeMinimalMaven {
      * run as a Service on port 6300
      */
     @func()
-    base(source: Directory, useCachedContainer: boolean=false): Container {
+    base(source?: Directory, useCachedContainer: boolean=false): Container {
         const ubuntuImage = "ubuntu:jammy-20240530"
         const cachedImage = "docker.io/jeremyatdockerhub/legend-engine-poc:latest@sha256:5f2c8256faf99174998c5719c8cd35fa5c8abcbff5022efd9f3162fa56a4cae3"
-        let ctr: Container
+
         if (useCachedContainer === true) {
-            ctr = dag.container().from(cachedImage)  
+            return dag.container().from(cachedImage)  
+        }
+        else if (source === undefined) {
+            throw new Error("if `use-cached-container` is `false` then must provide `source`.")
         }
         else {
-            ctr = dag
+            return dag
             .container()//{platform: "linux/amd64" as Platform})
             .from(ubuntuImage)
             .withExec([
@@ -50,11 +53,10 @@ class legendDaggerizeMinimalMaven {
             .withWorkdir("/src")
             .withExec(["mvn", "install", "-DskipTests"])
         }
-        return ctr
     }
 
     @func()
-    legendEngine(source: Directory, useCachedContainer: boolean=false): Container {
+    legendEngine(source?: Directory, useCachedContainer: boolean=false): Container {        
         const ctr = this.base(source, useCachedContainer)
         return ctr.withExec([
             "bash",

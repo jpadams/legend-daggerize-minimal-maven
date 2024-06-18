@@ -11,7 +11,7 @@ https://github.com/finos/legend/blob/master/installers/maven/README.md?plain=1#L
 ### Setup **legend-engine**.
 Using previous source build (saved via `publish --address ...`). You probably want this one if you can download the 2.23GB image 😄
 ```
-dagger call legend-engine --source https://github.com/finos/legend-engine\#master --use-cached-container as-service up
+dagger call -m github.com/jpadams/legend-daggerize-minimal-maven legend-engine --use-cached-container as-service up
 ```
 Purely from source (2-3 hours)
 ```
