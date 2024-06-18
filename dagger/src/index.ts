@@ -13,38 +13,50 @@ class legendDaggerizeMinimalMaven {
      * run as a Service on port 6300
      */
     @func()
-    legendEngine(source: Directory): Container {
+    base(source: Directory, useCachedContainer: boolean=false): Container {
         const ubuntuImage = "ubuntu:jammy-20240530"
+        const cachedImage = "docker.io/jeremyatdockerhub/legend-engine-poc:latest@sha256:5f2c8256faf99174998c5719c8cd35fa5c8abcbff5022efd9f3162fa56a4cae3"
+        let ctr: Container
+        if (useCachedContainer === true) {
+            ctr = dag.container().from(cachedImage)  
+        }
+        else {
+            ctr = dag
+            .container()//{platform: "linux/amd64" as Platform})
+            .from(ubuntuImage)
+            .withExec([
+                "apt",
+                "update",
+            ])
+            .withExec([
+                "apt",
+                "install",
+                "openjdk-11-jdk",
+                "maven",
+                "curl",
+                "gettext-base",
+                "-y",
+            ])
+            // maven deps cache
+            // did not seem worth it to cache target dirs as build often broke
+            .withMountedCache(
+                "/root/.m2/repository",
+                dag.cacheVolume("legend-engine-mvn-cache")
+            )
+            // copy in source - not mounted so we can publish all to registry
+            .withDirectory("/src", source)
+            // needs 8GB of heap to build locally
+            .withEnvVariable("MAVEN_OPTS", "-Xmx8g")
+            .withWorkdir("/src")
+            .withExec(["mvn", "install", "-DskipTests"])
+        }
+        return ctr
+    }
 
-        return dag
-        .container()//{platform: "linux/amd64" as Platform})
-        .from(ubuntuImage)
-        .withExec([
-            "apt",
-            "update",
-        ])
-        .withExec([
-            "apt",
-            "install",
-            "openjdk-11-jdk",
-            "maven",
-            "curl",
-            "gettext-base",
-            "-y",
-        ])
-        // maven deps cache
-        // did not seem worth it to cache target dirs as build often broke
-        .withMountedCache(
-            "/root/.m2/repository",
-            dag.cacheVolume("legend-engine-mvn-cache")
-        )
-        // mount source
-        .withMountedDirectory("/src", source)
-        // needs 8GB of heap to build locally
-        .withEnvVariable("MAVEN_OPTS", "-Xmx8192m")
-        .withWorkdir("/src")
-        .withExec(["mvn", "install", "-DskipTests"])
-        .withExec([
+    @func()
+    legendEngine(source: Directory, useCachedContainer: boolean=false): Container {
+        const ctr = this.base(source, useCachedContainer)
+        return ctr.withExec([
             "bash",
             "-c",
             `java -cp \
