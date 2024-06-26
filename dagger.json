@@ -1,6 +1,12 @@
 {
   "name": "legend-daggerize-minimal-maven",
   "sdk": "typescript",
+  "dependencies": [
+    {
+      "name": "proxy",
+      "source": "github.com/kpenfound/dagger-modules/proxy@fd1a6e75721454d8ee3bcb0bd1a94d6bb4be1737"
+    }
+  ],
   "source": "dagger",
-  "engineVersion": "v0.11.7"
+  "engineVersion": "v0.11.9"
 }
