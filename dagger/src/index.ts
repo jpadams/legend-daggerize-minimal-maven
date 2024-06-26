@@ -141,6 +141,7 @@ class legendDaggerizeMinimalMaven {
             config.yaml`
         ])
         .withExposedPort(6100)
+        // admin port
         .withExposedPort(6101)      
     }
 
@@ -182,6 +183,7 @@ class legendDaggerizeMinimalMaven {
         return dag.proxy()
         .withService(engine.asService(), "engine", 6300, 6300)
         .withService(sdlc.asService(), "sdlc", 6100, 6100)
+        .withService(sdlc.asService(), "sdlc-admin", 6101, 6101)
         .withService(studio.asService(), "studio", 9000, 9000)
         .service()
     }
