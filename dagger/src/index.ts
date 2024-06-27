@@ -18,9 +18,19 @@ class legendDaggerizeMinimalMaven {
      * Minimal Legend Engine, Studio, and SDLC using gitlab.com
      */
     @func()
-    minimal(appId: Secret, appSecret: Secret): Service {
-        const engine = this.legendEngine(null, true)
-        const sdlc = this.legendSdlc(dag.git("https://github.com/finos/legend-sdlc").branch("master").tree(), "gitlab.com", "localhost", appId, appSecret)
+    minimal(appId: Secret, appSecret: Secret, useCachedContainer:boolean=true): Service {
+        const engine = this.legendEngine(
+            // .git dir needed by io.github.git-commit-id:git-commit-id-maven-plugin:5.0.0:revision (get-the-git-infos) on project legend-engine-shared-core
+            useCachedContainer ? null : dag.git("https://github.com/finos/legend-engine", {keepGitDir: true}).branch("master").tree(),
+            useCachedContainer,
+        )
+        const sdlc = this.legendSdlc(
+            dag.git("https://github.com/finos/legend-sdlc").branch("master").tree(),
+            "gitlab.com",
+            "localhost",
+            appId,
+            appSecret,
+        )
         const studio = this.legendStudio(dag.git("https://github.com/finos/legend-studio").branch("master").tree())
         return dag.proxy()
         .withService(engine.asService(), "engine", 6300, 6300)
@@ -33,6 +43,7 @@ class legendDaggerizeMinimalMaven {
     /**
      * Legend Engine build
      */
+    @func()
     engineBase(source?: Directory, useCachedContainer: boolean=false): Container {
         const ubuntuImage = "ubuntu:jammy-20240530"
         // cache of this portion of the build since it takes several hours on my machine
@@ -71,6 +82,7 @@ class legendDaggerizeMinimalMaven {
     /** 
      * Legend SDLC build
      */
+    @func()
     sdlcBase(source: Directory): Container {
         return this.mavenBuild(source, 2, 11)
     }
@@ -108,7 +120,8 @@ class legendDaggerizeMinimalMaven {
 
     /**
      * Legend Studio build
-     */ 
+     */
+    @func()
     studioBase(source: Directory): Container {
         return dag
         .container()
@@ -135,6 +148,7 @@ class legendDaggerizeMinimalMaven {
     /**
      * Maven build
      */
+    @func()
     mavenBuild(source: Directory, heapGBs: number, jdkVer: number): Container {
         const ubuntuImage = "ubuntu:jammy-20240530"
 
