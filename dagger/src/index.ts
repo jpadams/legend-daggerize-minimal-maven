@@ -15,9 +15,24 @@ import {
 @object()
 class legendDaggerizeMinimalMaven {
     /**
-     * Legend Engine build
+     * Minimal Legend Engine, Studio, and SDLC using gitlab.com
      */
     @func()
+    minimal(appId: Secret, appSecret: Secret): Service {
+        const engine = this.legendEngine(null, true)
+        const sdlc = this.legendSdlc(dag.git("https://github.com/finos/legend-sdlc").branch("master").tree(), "gitlab.com", "localhost", appId, appSecret)
+        const studio = this.legendStudio(dag.git("https://github.com/finos/legend-studio").branch("master").tree())
+        return dag.proxy()
+        .withService(engine.asService(), "engine", 6300, 6300)
+        .withService(sdlc.asService(), "sdlc", 6100, 6100)
+        .withService(sdlc.asService(), "sdlc-admin", 6101, 6101)
+        .withService(studio.asService(), "studio", 9000, 9000)
+        .service()
+    }
+
+    /**
+     * Legend Engine build
+     */
     engineBase(source?: Directory, useCachedContainer: boolean=false): Container {
         const ubuntuImage = "ubuntu:jammy-20240530"
         // cache of this portion of the build since it takes several hours on my machine
@@ -30,36 +45,11 @@ class legendDaggerizeMinimalMaven {
             throw new Error("if `use-cached-container` is `false` then must provide `source`.")
         }
         else {
-            return dag
-            .container()//{platform: "linux/amd64" as Platform})
-            .from(ubuntuImage)
-            .withExec([
-                "apt",
-                "update",
-            ])
-            .withExec([
-                "apt",
-                "install",
-                "openjdk-11-jdk",
-                "maven",
-                "curl",
-                "gettext-base",
-                "-y",
-            ])
-            // maven deps cache
-            // did not seem worth it to cache target dirs as build often broke
-            .withMountedCache(
-                "/root/.m2/repository",
-                dag.cacheVolume("legend-engine-mvn-cache")
-            )
-            // copy in source - not mounted so we can publish all to registry
-            .withDirectory("/src", source)
             // needs 8GB of heap to build locally
-            .withEnvVariable("MAVEN_OPTS", "-Xmx8g")
-            .withWorkdir("/src")
-            .withExec(["mvn", "install", "-DskipTests"])
-        }
+            return this.mavenBuild(source, 8, 11)
+       }
     }
+
     /**
      * Legend Engine ready to run on localhost:6300
      */
@@ -81,41 +71,12 @@ class legendDaggerizeMinimalMaven {
     /** 
      * Legend SDLC build
      */
-	@func()
     sdlcBase(source: Directory): Container {
-        const ubuntuImage = "ubuntu:jammy-20240530"
-
-        return dag
-        .container()//{platform: "linux/amd64" as Platform})
-        .from(ubuntuImage)
-        .withExec([
-            "apt",
-            "update",
-        ])
-        .withExec([
-            "apt",
-            "install",
-            "openjdk-11-jdk",
-            "maven",
-            "curl",
-            "gettext-base",
-            "-y",
-        ])
-        // maven deps cache
-        .withMountedCache(
-            "/root/.m2/repository",
-            dag.cacheVolume("legend-engine-mvn-cache")
-        )
-        // copy in source - not mounted so we can publish all to registry
-        .withDirectory("/src", source)
-        // 2GB of heap works fine. Likely needs less.
-        .withEnvVariable("MAVEN_OPTS", "-Xmx2g")
-        .withWorkdir("/src")
-        .withExec(["mvn", "install", "-DskipTests"])
+        return this.mavenBuild(source, 2, 11)
     }
 
     /**
-     * Legend SDLC ready to run on localhost:6100
+     * Legend SDLC ready to run on localhost:6100, admin 6101
      */
     @func()
     legendSdlc(
@@ -148,7 +109,6 @@ class legendDaggerizeMinimalMaven {
     /**
      * Legend Studio build
      */ 
-    @func()
     studioBase(source: Directory): Container {
         return dag
         .container()
@@ -173,18 +133,37 @@ class legendDaggerizeMinimalMaven {
     }   
 
     /**
-     * Minimal Legend Engine, Studio, and SDLC using gitlab.com
-     */ 
-    @func()
-    minimal(appId: Secret, appSecret: Secret): Service {
-        const engine = this.legendEngine(null, true)
-        const sdlc = this.legendSdlc(dag.git("https://github.com/finos/legend-sdlc").branch("master").tree(), "gitlab.com", "localhost", appId, appSecret)
-        const studio = this.legendStudio(dag.git("https://github.com/finos/legend-studio").branch("master").tree())
-        return dag.proxy()
-        .withService(engine.asService(), "engine", 6300, 6300)
-        .withService(sdlc.asService(), "sdlc", 6100, 6100)
-        .withService(sdlc.asService(), "sdlc-admin", 6101, 6101)
-        .withService(studio.asService(), "studio", 9000, 9000)
-        .service()
+     * Maven build
+     */
+    mavenBuild(source: Directory, heapGBs: number, jdkVer: number): Container {
+        const ubuntuImage = "ubuntu:jammy-20240530"
+
+        return dag
+        .container()//{platform: "linux/amd64" as Platform})
+        .from(ubuntuImage)
+        .withExec([
+            "apt",
+            "update",
+        ])
+        .withExec([
+            "apt",
+            "install",
+            `openjdk-${jdkVer}-jdk`,
+            "maven",
+            "curl",
+            "gettext-base",
+            "-y",
+        ])
+        // maven deps cache
+        // did not seem worth it to cache target dirs as build often broke
+        .withMountedCache(
+            "/root/.m2/repository",
+            dag.cacheVolume("legend-mvn-cache")
+        )
+        // copy in source - not mounted so we can publish all to registry
+        .withDirectory("/src", source)
+        .withEnvVariable("MAVEN_OPTS", `-Xmx${heapGBs}g`)
+        .withWorkdir("/src")
+        .withExec(["mvn", "install", "-DskipTests"])
     }
-}   
+}
