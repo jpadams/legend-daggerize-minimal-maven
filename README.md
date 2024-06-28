@@ -9,5 +9,5 @@ https://github.com/finos/legend/blob/master/installers/maven/README.md?plain=1#L
 ### Setup
 1. Follow the instructions to set up a GitLab app from https://github.com/finos/legend/blob/master/installers/maven/README.md?plain=1#L17-L28
 2. Collect your Gitlab app's `APP_ID` and `APP_SECRET` and store them in environment variables
-3. Invoke `dagger call minimal --app-id env:APP_ID --app-secret env:APP_SECRET up` to bring up the services 
-4. Browse to http://localhost:9000/studio and authenticate via gitlab.com oauth/OIDC
+3. Invoke `dagger call minimal --app-id env:APP_ID --app-secret env:APP_SECRET --use-cached-container up` to bring up the services 
+4. Browse to http://localhost:9000/studio and authenticate via gitlab.com oauth/OIDC (also checkout localhost:6300, and localhost:6101)
