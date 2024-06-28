@@ -6,7 +6,7 @@ import {
     dag,
     Container,
     Directory,
-	Secret,
+    Secret,
     Service,
     object,
     func,
@@ -19,19 +19,10 @@ class legendDaggerizeMinimalMaven {
      */
     @func()
     minimal(appId: Secret, appSecret: Secret, useCachedContainer:boolean=true): Service {
-        const engine = this.legendEngine(
-            // .git dir needed by io.github.git-commit-id:git-commit-id-maven-plugin:5.0.0:revision (get-the-git-infos) on project legend-engine-shared-core
-            useCachedContainer ? null : dag.git("https://github.com/finos/legend-engine", {keepGitDir: true}).branch("master").tree(),
-            useCachedContainer,
-        )
-        const sdlc = this.legendSdlc(
-            dag.git("https://github.com/finos/legend-sdlc").branch("master").tree(),
-            "gitlab.com",
-            "localhost",
-            appId,
-            appSecret,
-        )
+        const engine = this.legendEngine(useCachedContainer ? null : dag.git("https://github.com/finos/legend-engine", {keepGitDir: true}).branch("master").tree(), useCachedContainer)
+        const sdlc = this.legendSdlc(dag.git("https://github.com/finos/legend-sdlc").branch("master").tree(), "gitlab.com", "localhost", appId, appSecret)
         const studio = this.legendStudio(dag.git("https://github.com/finos/legend-studio").branch("master").tree())
+
         return dag.proxy()
         .withService(engine.asService(), "engine", 6300, 6300)
         .withService(sdlc.asService(), "sdlc", 6100, 6100)
@@ -47,10 +38,11 @@ class legendDaggerizeMinimalMaven {
     engineBase(source?: Directory, useCachedContainer: boolean=false): Container {
         const ubuntuImage = "ubuntu:jammy-20240530"
         // cache of this portion of the build since it takes several hours on my machine
-        const cachedImage = "docker.io/jeremyatdockerhub/legend-engine-poc:latest@sha256:5f2c8256faf99174998c5719c8cd35fa5c8abcbff5022efd9f3162fa56a4cae3"
+        //const cachedImage = "docker.io/jeremyatdockerhub/legend-engine-poc:latest@sha256:5f2c8256faf99174998c5719c8cd35fa5c8abcbff5022efd9f3162fa56a4cae3"
+        const cachedImage = "docker.io/jeremyatdockerhub/legend-engine-poc:latest@sha256:0885578d39ee42a5c863a6fbbe10b2de99d0ae710f6fbefa98a28446917b84a7"
 
         if (useCachedContainer === true) {
-            return dag.container().from(cachedImage)  
+            return dag.container().from(cachedImage)
         }
         else if (source === undefined) {
             throw new Error("if `use-cached-container` is `false` then must provide `source`.")
@@ -115,7 +107,7 @@ class legendDaggerizeMinimalMaven {
         ])
         .withExposedPort(6100)
         // admin port
-        .withExposedPort(6101)      
+        .withExposedPort(6101)
     }
 
     /**
@@ -143,7 +135,15 @@ class legendDaggerizeMinimalMaven {
         return this.studioBase(source)
         .withExposedPort(9000)
         .withExec(["yarn", "dev"])
-    }   
+    }
+
+    /** 
+     * Legend Depot build
+     */
+    @func()
+    depotBase(source: Directory): Container {
+        return this.mavenBuild(source, 2, 11)
+    }
 
     /**
      * Maven build
