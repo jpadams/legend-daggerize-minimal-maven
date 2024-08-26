@@ -1,6 +1,7 @@
 <p>Dagger website: https://dagger.io<br/>
 Docs: https://docs.dagger.io<br/>
-Dagger repo: https://github.com/dagger/dagger</p>
+Dagger repo: https://github.com/dagger/dagger<br/>
+Daggerverse: https://daggerverse.dev</p>
 
 ## Minimal Maven Install via `Engine`, `SDLC`, and `Studio`
 https://github.com/finos/legend/blob/master/installers/maven/README.md?plain=1#L3
